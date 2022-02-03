@@ -6,6 +6,7 @@ const User = require('../../models/User');
 const { SECRET_KEY } = require('../../secrets');
 const { validateRegisterInput } = require('../../utils/validators');
 const { validateLoginInput } = require('../../utils/validators');
+const checkAuth = require('../../utils/checkAuth');
 
 function generateToken(user) {
   return jwt.sign(
@@ -109,6 +110,9 @@ module.exports = {
         username,
         password,
         createdAt: new Date().toISOString(),
+        address: [],
+        payments: [],
+        points: 500,
       });
 
       const res = await newUser.save();
@@ -119,6 +123,37 @@ module.exports = {
         id: res._id,
         token,
       };
+    },
+    async updateUserDetails(
+      _,
+      { userDetailsInput: { address, payments, points } },
+      context,
+      info,
+    ) {
+      const user = checkAuth(context);
+      const username = user.username;
+
+      if (!user)
+        throw new AuthenticationError(
+          'You are not authorized to add details to the pin',
+        );
+
+      const update = { $set: {}, $push: {} };
+      update['$set']['points'] = points;
+      update['$push']['address'] = address;
+      update['$push']['payments'] = payments;
+
+      const updatedUser = await User.findOneAndUpdate({ username }, update, {
+        useFindAndModify: false,
+        new: true,
+      });
+      return updatedUser;
+      // try {
+      //   const updateUser = await updatedUser.save();
+      //   return updateUser;
+      // } catch (err) {
+      //   throw new Error('Updation Error');
+      // }
     },
   },
 };
