@@ -7,6 +7,7 @@ const { SECRET_KEY } = require('../../secrets');
 const { validateRegisterInput } = require('../../utils/validators');
 const { validateLoginInput } = require('../../utils/validators');
 const checkAuth = require('../../utils/checkAuth');
+const { AuthenticationError } = require('apollo-server');
 
 function generateToken(user) {
   return jwt.sign(
@@ -35,7 +36,20 @@ module.exports = {
       try {
         const user = User.findById(userId);
         if (user) return user;
-        else throw new Error('Pin Not found');
+        else throw new Error('User Not found');
+      } catch (err) {
+        throw new Error(err);
+      }
+    },
+    async getUserOrders(_, { userId }) {
+      try {
+        const user = User.findById(userId);
+        if (user)
+          return {
+            generatedOrders: user.generatedOrders,
+            acceptedOrders: user.acceptedOrders,
+          };
+        else throw new Error('User Not Found');
       } catch (err) {
         throw new Error(err);
       }
@@ -112,7 +126,10 @@ module.exports = {
         createdAt: new Date().toISOString(),
         address: [],
         payments: [],
+        phone: null,
         points: 500,
+        generatedOrders: [],
+        acceptedOrders: [],
       });
 
       const res = await newUser.save();
@@ -126,7 +143,7 @@ module.exports = {
     },
     async updateUserDetails(
       _,
-      { userDetailsInput: { address, payments, points } },
+      { userDetailsInput: { address, payments, points, phone } },
       context,
       info,
     ) {
@@ -135,13 +152,14 @@ module.exports = {
 
       if (!user)
         throw new AuthenticationError(
-          'You are not authorized to add details to the pin',
+          'You are not authorized to update details',
         );
 
       const update = { $set: {}, $push: {} };
-      update['$set']['points'] = points;
-      update['$push']['address'] = address;
-      update['$push']['payments'] = payments;
+      if (points !== undefined) update['$set']['points'] = points;
+      if (address !== undefined) update['$push']['address'] = address;
+      if (payments !== undefined) update['$push']['payments'] = payments;
+      if (phone !== undefined) update['$set']['phone'] = phone;
 
       const updatedUser = await User.findOneAndUpdate({ username }, update, {
         useFindAndModify: false,

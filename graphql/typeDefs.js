@@ -5,6 +5,17 @@ module.exports = gql`
     paymentType: String
     paymentId: String
   }
+  type OrderItems {
+    productName: String
+    productQty: Int
+  }
+  type UserOrders {
+    ordersGenerated: [OrderItems]
+    ordersAccepted: [OrderItems]
+  }
+  type UserOrderIds {
+    orderId: String!
+  }
   type User {
     id: ID!
     username: String!
@@ -12,29 +23,25 @@ module.exports = gql`
     token: String
     createdAt: String!
     address: [String]
+    phone: String
     payments: [Payments]
     points: Int
+    ordersGenerated: [UserOrderIds]
+    ordersAccepted: [UserOrderIds]
   }
-  type Payments {
-    paymentType: String
-    paymentId: String
+
+  type Order {
+    orderName: String
+    orderCategory: String
+    orderGeneratedBy: String!
+    orderItems: [OrderItems]
+    points: Int
+    orderAcceptedBy: String
   }
-  # type UserDetails {
-  #   address: [String]
-  #   payments: [Payments]
-  #   points: Int
-  # }
-  # type CompleteUserDetails {
-  #   id: ID!
-  #   username: String!
-  #   email: String!
-  #   token: String
-  #   createdAt: String!
-  #   address: [String]
-  #   payments: [Payments]
-  #   points: Int
-  #   userDetails: UserDetails
-  # }
+  input OrderItemInput {
+    productName: String
+    productQty: Int
+  }
   input PaymentInput {
     paymentType: String
     paymentId: String
@@ -48,14 +55,26 @@ module.exports = gql`
     address: String
     payments: PaymentInput
     points: Int
+    phone: String
+  }
+  input OrderInput {
+    orderName: String
+    orderCategory: String
+    orderGeneratedBy: String!
+    orderItems: [OrderItemInput]
+    points: Int
   }
   type Query {
     getUsers: [User]
     getUser(userId: ID!): User
+    getOrders: [Order]
+    getOrder(orderId: ID!): Order
+    getUserOrders(userId: ID!): [UserOrders]
   }
   type Mutation {
     register(registerInput: RegisterInput): User!
     login(username: String!, password: String!): User!
     updateUserDetails(userDetailsInput: UserDetailsInput): User!
+    addOrder(orderInput: OrderInput): Order
   }
 `;
