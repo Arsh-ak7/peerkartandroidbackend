@@ -43,18 +43,16 @@ const UserSchema = new mongoose.Schema(
     },
     ordersGenerated: [
       {
-        orderId: {
-          type: String,
-          required: true,
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Order',
       },
     ],
     ordersAccepted: [
       {
-        orderId: {
-          type: String,
-          required: true,
-        },
+        type: String,
+        required: true,
+        ref: 'Order',
       },
     ],
   },

@@ -58,6 +58,7 @@ module.exports = {
         orderGeneratedBy,
         orderItems,
         points,
+        orderAcceptedBy: null,
         createdAt: new Date().toISOString(),
       });
 
@@ -66,9 +67,7 @@ module.exports = {
         { username: orderGeneratedBy },
         {
           $push: {
-            ordersGenerated: {
-              orderId: res._id,
-            },
+            ordersGenerated: res._id,
           },
         },
         { useFindAndModify: false, new: true },

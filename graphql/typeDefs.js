@@ -9,10 +9,6 @@ module.exports = gql`
     productName: String
     productQty: Int
   }
-  type UserOrders {
-    ordersGenerated: [OrderItems]
-    ordersAccepted: [OrderItems]
-  }
   type UserOrderIds {
     orderId: String!
   }
@@ -26,10 +22,9 @@ module.exports = gql`
     phone: String
     payments: [Payments]
     points: Int
-    ordersGenerated: [UserOrderIds]
-    ordersAccepted: [UserOrderIds]
+    ordersGenerated: [Order]
+    ordersAccepted: [Order]
   }
-
   type Order {
     orderName: String
     orderCategory: String
@@ -37,6 +32,10 @@ module.exports = gql`
     orderItems: [OrderItems]
     points: Int
     orderAcceptedBy: String
+  }
+  type UserOrders {
+    ordersGenerated: [Order]
+    ordersAccepted: [Order]
   }
   input OrderItemInput {
     productName: String
@@ -69,12 +68,13 @@ module.exports = gql`
     getUser(userId: ID!): User
     getOrders: [Order]
     getOrder(orderId: ID!): Order
-    getUserOrders(userId: ID!): [UserOrders]
+    getUserOrders(userId: ID!): UserOrders
   }
   type Mutation {
     register(registerInput: RegisterInput): User!
     login(username: String!, password: String!): User!
     updateUserDetails(userDetailsInput: UserDetailsInput): User!
     addOrder(orderInput: OrderInput): Order
+    acceptOrder(orderId: String!): User
   }
 `;

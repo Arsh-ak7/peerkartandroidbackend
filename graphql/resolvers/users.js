@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { UserInputError } = require('apollo-server');
 
 const User = require('../../models/User');
+const Order = require('../../models/Orders');
 const { SECRET_KEY } = require('../../secrets');
 const { validateRegisterInput } = require('../../utils/validators');
 const { validateLoginInput } = require('../../utils/validators');
@@ -43,13 +44,19 @@ module.exports = {
     },
     async getUserOrders(_, { userId }) {
       try {
-        const user = User.findById(userId);
-        if (user)
-          return {
-            generatedOrders: user.generatedOrders,
-            acceptedOrders: user.acceptedOrders,
+        const user = await User.findOne({ username: userId })
+          .populate('ordersGenerated')
+          .populate('ordersAccepted');
+        if (user) {
+          const ordersGeneratedPopulated = user.ordersGenerated;
+          const ordersAcceptedPopulated = user.ordersAccepted;
+
+          let orders = {
+            ordersGenerated: ordersGeneratedPopulated,
+            ordersAccepted: ordersAcceptedPopulated,
           };
-        else throw new Error('User Not Found');
+          return orders;
+        } else throw new Error('User Not Found');
       } catch (err) {
         throw new Error(err);
       }
@@ -172,6 +179,46 @@ module.exports = {
       // } catch (err) {
       //   throw new Error('Updation Error');
       // }
+    },
+    async acceptOrder(_, { orderId }, context, info) {
+      const user = checkAuth(context);
+      const username = user.username;
+      if (!user)
+        throw new AuthenticationError(
+          'You are not authorized to update details',
+        );
+      try {
+        const update = { $set: {}, $push: {} };
+        const order = await Order.findOne({ _id: orderId });
+
+        if (order.orderAcceptedBy !== null)
+          throw new Error('Order already accepted by someone else');
+
+        update['$set']['orderAcceptedBy'] = username;
+        const updatedOrder = await Order.findOneAndUpdate(
+          { _id: orderId },
+          update,
+          {
+            useFindAndModify: false,
+            new: true,
+          },
+        );
+
+        const updatedUser = await User.findOneAndUpdate(
+          { username },
+          {
+            $push: {
+              ordersAccepted: updatedOrder._id,
+            },
+          },
+          { useFindAndModify: false, new: true },
+        )
+          .populate('ordersGenerated')
+          .populate('ordersAccepted');
+        return updatedUser;
+      } catch (err) {
+        throw new Error('Not able to accept order');
+      }
     },
   },
 };
