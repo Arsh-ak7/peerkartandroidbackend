@@ -7,7 +7,7 @@ module.exports = {
   Query: {
     async getOrders() {
       try {
-        const orders = await Orders.find({});
+        const orders = await Order.find({});
         return orders;
       } catch (err) {
         throw new Error(err);
@@ -15,7 +15,7 @@ module.exports = {
     },
     async getOrder(_, { orderId }) {
       try {
-        const order = await Orders.findById(orderId);
+        const order = await Order.findById(orderId);
         if (order) return order;
         else throw new Error('Order Not Found');
       } catch (err) {
